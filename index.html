@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Online Video KYC</title>
+<style>
+/* Add your CSS styles here */
+
+
+</style>
+</head>
+<body>
+<!-- Canvas -->
+<canvas class="orb-canvas"></canvas>
+
+<!-- Overlay -->
+<div class="overlay" id="overlay">
+  <!-- Overlay inner wrapper -->
+  <div class="overlay__inner">
+    <!-- Title -->
+    <h1 class="overlay__title">
+      Online
+      <span class="text-gradient">Video</span> KYC
+    </h1>
+    <div id="language-selection">
+      <label for="language"><strong>Select Language:</strong></label>
+      <select id="language">
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+        <option value="mar">Marathi</option>
+        <!-- Add more language options here -->
+      </select>
+    </div>
+    <!-- Description -->
+    <p class="overlay__description">
+      <strong>This is an Automated Secured Platform!
+      </strong>
+    </p>
+
+    <p class="overlay__description">
+      <strong>
+        Keep your Aadhaar/Pan-Card Ready Before Proceeding!
+      </strong>
+    </p>
+    <!-- Buttons -->
+    <div class="overlay__btns">
+      <button class="overlay__btn overlay__btn--transparent" onclick="startKYC()">
+        Start Video KYC
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="kyc-form-overlay" style="display: none;" class="overlay">
+  <!-- Overlay inner wrapper -->
+  <div class="overlay__inner">
+    <!-- Form fields -->
+    <div id="kyc-form">
+      <div id="conversation">
+        <p class="overlay__description">
+          <strong>Please Enter Your Basic Details </strong>
+        </p>
+        <p class="overlay__description">
+          <strong>All Fields Are Compulsory! </strong>
+        </p>
+      </div>
+      <div id="form-fields">
+          <label for="name">Name:</label>
+          <input type="text" id="name" placeholder="Enter your name">
+          <label for="dob">Date of Birth:</label>
+          <input type="date" id="dob">
+          <label for="address">Address:</label>
+          <textarea id="address" rows="4" placeholder="Enter your address"></textarea>
+          <label for="income">Income Range:</label>
+          <select id="income">
+              <option value="">Select your income range</option>
+              <option value="0-50000">0 - 50,000</option>
+              <option value="50001-100000">50,001 - 100,000</option>
+              <option value="100001-200000">100,001 - 200,000</option>
+              <option value="200001-500000">200,001 - 500,000</option>
+              <option value="500001+">500,001+</option>
+          </select>
+          <label for="employment">Type of Employment:</label>
+          <select id="employment">
+              <option value="">Select your type of employment</option>
+              <option value="salaried">Salaried</option>
+              <option value="self-employed">Self-Employed</option>
+              <option value="business-owner">Business Owner</option>
+              <option value="student">Student</option>
+              <option value="unemployed">Unemployed</option>
+              <option value="retired">Retired</option>
+          </select>
+      </div>
+      <button class="overlay__btn overlay__btn--transparent" onclick="nextStep()">Next</button>
+    </div>
+  </div>
+</div>
+
+
+<div id="kyc-photograph" style="display: none;" class="overlay">
+  <div class="overlay__inner">
+     <!-- Camera interface -->
+      <div id="conversation">
+        <p class="overlay__description">
+          <strong>Please Hold Still And Cover The Whole Frame</strong>
+        </p>
+      </div>
+     <video id="video" width="640" height="480" autoplay></video>
+     <button class="overlay__btn overlay__btn--transparent" id="capture-btn" onclick="capturePhotograph()">Capture Photograph</button>
+  </div>  
+</div>
+
+<div id="kyc-aadhaar-pan" style="display: none;" class="overlay">
+  <div class="overlay__inner">    
+    <!-- Camera interface for Aadhaar/PAN -->
+    <div id="conversation">
+      <p class="overlay__description">
+        <strong>Please hold Still Your ID Within The Frame!</strong>
+      </p>
+    </div>
+    <video id="aadhaar-pan-video" width="640" height="480" autoplay></video>
+    <button class="overlay__btn overlay__btn--transparent" id="capture-aadhaar-pan-btn" onclick="captureAadhaarPan()">Capture Aadhaar/PAN Video</button>
+  </div>
+</div>
+
+<div id="kyc-signature" style="display: none;" class="overlay">
+  <div class="overlay__inner">    
+    <div id="conversation">
+      <p class="overlay__description">
+        <strong>Please Upload Your Signature!</strong>
+      </p>
+    </div>
+    <input type="file" id="signature" accept="image/*">
+    <button class="overlay__btn overlay__btn--transparent" id="upload-signature-btn" onclick="uploadSignature()">Upload Signature</button>
+  </div>
+</div>
+
+<div id="kyc-complete" style="display: none;" class="overlay">
+  <div class="overlay__inner">
+    <div id="conversation">
+      <p class="overlay__description">
+        <strong>Your KYC has been successfully completed!</strong>
+      </p>
+    </div>
+    <button class="overlay__btn overlay__btn--transparent" onclick="backToHome()">Back to Home</button>
+  </div>
+</div>
+
+<div id="successMessage" class="success-message" style="display: none;">
+  <span class="tick-mark">&#10003;</span> Success!
+</div>
+
+<script>
+var step = 0; // Track current step in KYC process
+var video = document.getElementById('video');
+var aadhaarPanVideo = document.getElementById('aadhaar-pan-video');
+var overlay = document.getElementById("overlay");
+var kycFormOverlay = document.getElementById("kyc-form-overlay");
+var successMessage = document.getElementById("successMessage");
+var userDetails = {};
+
+function startKYC() {
+    overlay.style.display = "none";
+    kycFormOverlay.style.display = "block";
+}
+
+function nextStep() {
+    var name = document.getElementById("name").value;
+    var dob = document.getElementById("dob").value;
+    var address = document.getElementById("address").value;
+    var income = document.getElementById("income").value;
+    var employment = document.getElementById("employment").value;
+
+    if (name && dob && address && income && employment) {
+        // Store user details
+        userDetails.name = name;
+        userDetails.dob = dob;
+        userDetails.address = address;
+        userDetails.income = income;
+        userDetails.employment = employment;
+
+        // Proceed to photograph capture step
+        kycFormOverlay.style.display = "none";
+        document.getElementById("kyc-photograph").style.display = "block";
+        showSuccessMessage();
+        // Open webcam for capturing photograph
+        navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function(stream) {
+            video.srcObject = stream;
+        })
+        .catch(function(err) {
+            console.log("An error occurred: " + err);
+        });
+    }
+}
+
+function capturePhotograph() {
+    // Capture photograph logic here
+    // Once photograph is captured, proceed to Aadhaar/PAN capture step
+    document.getElementById("kyc-photograph").style.display = "none";
+    document.getElementById("kyc-aadhaar-pan").style.display = "block";
+    showSuccessMessage();
+    // Open webcam for capturing Aadhaar/PAN video
+    navigator.mediaDevices.getUserMedia({ video: true })
+    .then(function(stream) {
+        aadhaarPanVideo.srcObject = stream;
+    })
+    .catch(function(err) {
+        console.log("An error occurred: " + err);
+    });
+}
+
+function captureAadhaarPan() {
+    // Capture Aadhaar/PAN video logic here
+    // Once Aadhaar/PAN video is captured, proceed to signature upload step
+    document.getElementById("kyc-aadhaar-pan").style.display = "none";
+    document.getElementById("kyc-signature").style.display = "block";
+    showSuccessMessage();
+}
+
+function uploadSignature() {
+    // Upload signature logic here
+    // After signature is uploaded, KYC process is completed
+    userDetails.signature = document.getElementById("signature").value;
+    createFile(userDetails);
+}
+
+function createFile(userDetails) {
+    var data = `Name: ${userDetails.name}\nDate of Birth: ${userDetails.dob}\nAddress: ${userDetails.address}\nIncome Range: ${userDetails.income}\nType of Employment: ${userDetails.employment}\nSignature: ${userDetails.signature}`;
+    
+    // Create a blob with the data
+    var blob = new Blob([data], { type: 'text/plain' });
+
+    // Create a temporary URL for the blob
+    var url = window.URL.createObjectURL(blob);
+
+    // Create a link and click it to trigger the download
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'KYC_Details.txt';
+    link.click();
+
+    // Clean up
+    window.URL.revokeObjectURL(url);
+
+    // Show KYC completion interface
+    document.getElementById("kyc-signature").style.display = "none";
+    document.getElementById("kyc-complete").style.display = "block";
+}
+
+function backToHome() {
+    document.getElementById("kyc-complete").style.display = "none";
+    overlay.style.display = "block";
+}
+
+function showSuccessMessage() {
+    successMessage.style.display = "block";
+    setTimeout(function() {
+        successMessage.style.display = "none";
+    }, 2000); // Hide after 2 seconds
+}
+</script>
+</body>
+</html>
